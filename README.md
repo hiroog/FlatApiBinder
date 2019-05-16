@@ -93,3 +93,5 @@ JNIEXPORT jstring JNICALL   Java_com_example_testapp_NdkRoot_stringFromJNI( JNIE
 
 
 
+
+
