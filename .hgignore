@@ -1,0 +1,41 @@
+syntax: glob
+__pycache__
+*.orig
+*.swp
+*.swo
+*.a
+*.o
+.git
+# -- win
+*.lib
+*.dll
+*.obj
+*.pdb
+*.sdf
+*.suo
+*.opensdf
+*.opendb
+*.VC.db
+*.user
+*.exe
+.vs
+# -- macos
+.DS_Store
+xcuserdata
+*.air
+*.metal
+*.metallib
+*.metal-ar
+# -- android
+*.iml
+.gradle
+local.properties
+.idea/caches
+.idea/libraries
+.idea/modules.xml
+.idea/workspace.xml
+.idea/assetWizardSettings.xml
+build
+captures
+.externalNativeBuild
+app/build
