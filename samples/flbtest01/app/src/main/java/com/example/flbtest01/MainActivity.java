@@ -11,7 +11,7 @@ public class MainActivity extends AppCompatActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		NdkRoot	api= NdkRoot.Init();
+		NdkLib	api= NdkLib.getAPI();
 
 		TextView tv = findViewById(R.id.sample_text);
 		tv.setText( api.stringFromJNI() );
@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
 		api.Assert( api.AddDouble( 123456789.01, 123.123f ) == 123456789.01 + 123.123f, "AddDouble failed" );
 
 
-		TestApiClass	test= TestApiClass.Create();
+		NativeClass	test= new NativeClass();
 		test.SetParams( 100100, (short)2020, (byte)101, 303030303030303030L, 4400.44f, 555000.555 );
 		api.Assert( test.GetIntParam() == 100100, "IntParam failed" );
 		api.Assert( test.GetShortParam() == 2020, "ShortParam failed" );
@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
 		api.Assert( test.GetLongParam() == 303030303030303030L, "LongParam failed" );
 		api.Assert( test.GetFloatParam() == 4400.44f, "FloatParam failed" );
 		api.Assert( test.GetDoubleParam() == 555000.555, "DoubleParam failed" );
-		test.AccessJNIEnv( this );
-		test.Release();
+		test.AccessJNIEnv( new int[]{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 } );
+		test.release();
 	}
 }

@@ -1,3 +1,6 @@
+// FlatApiBinder sample
+// vim:ts=4 sw=4 noet:
+
 #include <jni.h>
 #include <string.h>
 #include "TestAssert.h"
@@ -7,9 +10,10 @@
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
+
 const char*	stringFromJNI()
 {
-	return	"Hello from C++ (flbtest01)";
+	return	"Hello from C++ (flbtest02)";
 }
 
 
@@ -32,15 +36,18 @@ int	SetParams( int a0, short a1, signed char a2, long long a3, float a4, double 
 	return	1122334455;
 }
 
+
 long long	AddLong( int a0, long long a1 )
 {
 	return	a0 + a1;
 }
 
+
 float		AddFloat( float a0, int a1 )
 {
 	return	a0 + a1;
 }
+
 
 double		AddDouble( double a0, float a1 )
 {
@@ -52,7 +59,7 @@ double		AddDouble( double a0, float a1 )
 //-----------------------------------------------------------------------------
 
 
-class TestApiImplementation : public TestApiClass {
+class NativeClassImplementation : public NativeClass {
 
 	int			Arg0= 0;
 	short		Arg1= 0;
@@ -62,15 +69,15 @@ class TestApiImplementation : public TestApiClass {
 	double		Arg5= 0;
 
 public:
-	TestApiImplementation()
+	NativeClassImplementation()
 	{
 	}
 
-	~TestApiImplementation() override
+	~NativeClassImplementation() override
 	{
 	}
 
-	void	ReleaseAPI()
+	void	ReleaseInstance() override
 	{
 		delete this;
 	}
@@ -115,26 +122,30 @@ public:
 		return	Arg5;
 	}
 
-	void	AccessJNIEnv( JNIEnv* env, jobject tobj, jobject java_object )
+	void	AccessJNIEnv( JNIEnv* env, jobject tobj, jobject java_object ) override
 	{
-		//
+		auto	jarray= reinterpret_cast<jintArray>( java_object );
+		int		array_size= env->GetArrayLength( jarray );
+		jint*	data= env->GetIntArrayElements( jarray, nullptr );
+		TEST_ASSERT( array_size == 10 );
+		TEST_ASSERT( data[0] == 1 );
+		TEST_ASSERT( data[9] == 10 );
+		env->ReleaseIntArrayElements( jarray, data, 0 );
 	}
 };
 
 
 
 
-TestApiClass::~TestApiClass()
+NativeClass::~NativeClass()
 {
 }
 
 
-TestApiClass*	TestApiClass::CreateAPI()
+NativeClass*	NativeClass::CreateInstance()
 {
-	return	new TestApiImplementation();
+	return	new NativeClassImplementation();
 }
-
-
 
 
 //-----------------------------------------------------------------------------

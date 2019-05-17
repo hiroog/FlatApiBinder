@@ -1,11 +1,17 @@
+// FlatApiBinder sample
+// vim:ts=4 sw=4 noet:
+
 #pragma once
 
 #if defined(FLAPIBINDER)
-const char*	FLAPIBINDER_ClassPath= "com.example.flbtest02.NdkRoot";
+const char*	FLAPIBINDER_ClassPath= "com.example.flbtest02.NdkLib";
+const char*	FLAPIBINDER_Includes=  "NativeInterface.h";
 struct JNIEnv;
 struct jobject;
 #endif
 
+
+// com.example.flbtest02.NdkLib
 
 const char*	stringFromJNI();
 void	Assert( bool expr, const char* message );
@@ -15,15 +21,14 @@ float		AddFloat( float a0, int a1 );
 double		AddDouble( double a0, float a1 );
 
 
+// com.example.flbtest02.NativeClass
 
-
-
-class TestApiClass {
+class NativeClass {
 public:
-	static TestApiClass*	CreateAPI();
+	static NativeClass*	CreateInstance();
 
-	virtual	~TestApiClass();
-	virtual void	ReleaseAPI()= 0;
+	virtual	~NativeClass();
+	virtual void	ReleaseInstance()= 0;
 	virtual void	SetParams( int a0, short a1, signed char a2, long long a3, float a4, double a5 )= 0;
 	virtual int			GetIntParam()= 0;
 	virtual short		GetShortParam()= 0;

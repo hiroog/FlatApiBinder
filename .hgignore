@@ -6,6 +6,7 @@ __pycache__
 *.a
 *.o
 .git
+test00
 # -- win
 *.lib
 *.dll

@@ -38,10 +38,11 @@ class BFunction:
 
 
 class BClass:
-    def __init__( self, name, is_root ):
+    def __init__( self, name, is_root, package ):
         self.name= name
         self.is_root= is_root
         self.func_list= []
+        self.package= package
 
     def add_func( self, func ):
         self.func_list.append( func )
@@ -74,9 +75,10 @@ class HeaderDecoder:
 
     def add_class( self, class_name, is_root= False ):
         self.class_name= class_name
-        self.class_list[ class_name ]= BClass( class_name, is_root )
+        self.class_list[ class_name ]= BClass( class_name, is_root, self.package )
         if is_root:
             self.root_class= class_name
+            self.root_package= self.package
 
     def set_classpath( self, class_path ):
         node_list= class_path.split('.')
@@ -96,6 +98,10 @@ class HeaderDecoder:
         if cursor.spelling == 'FLAPIBINDER_ClassPath':
             path= self.find_string( cursor )
             self.set_classpath( path )
+            print( 'Set PACKAGE   =', self.package )
+        elif cursor.spelling == 'FLAPIBINDER_Package':
+            path= self.find_string( cursor )
+            self.package= path
             print( 'Set PACKAGE   =', self.package )
         elif cursor.spelling == 'FLAPIBINDER_DllName':
             name= self.find_string( cursor )
@@ -141,8 +147,6 @@ class HeaderDecoder:
     def p_class( self, cursor ):
         self.class_stack.append( self.class_name )
         self.add_class( cursor.spelling )
-        self.class_path= self.package + '.' + self.class_name
-        print( 'Set CLASS PATH=', self.class_path )
 
     def p_class_end( self, cursor ):
         self.class_name= self.class_stack.pop()
@@ -277,6 +281,16 @@ class CodeGenerator:
             os.makedirs( path )
         return  path
 
+    def hasFactory( self, api ):
+        has_create= None
+        has_release= None
+        for func in api.func_list:
+            if func.name == 'CreateInstance':
+                has_create= func
+            elif func.name == 'ReleaseInstance':
+                has_release= func
+        return  has_create,has_release
+
 
 class JavaGenerator( CodeGenerator ):
 
@@ -328,9 +342,6 @@ class JavaGenerator( CodeGenerator ):
             fo.write( 'package %s;\n' % package )
             fo.write( '\n' )
             fo.write( 'public class %s {\n' % root_class )
-            fo.write( '\tstatic {\n' )
-            fo.write( '\t\tSystem.loadLibrary("%s");\n' % dll_name )
-            fo.write( '\t}\n' )
             for class_name in class_list:
                 api= class_list[class_name]
                 fo.write( '\n' )
@@ -345,32 +356,35 @@ class JavaGenerator( CodeGenerator ):
                     fo.write( '\tpublic native %s\t%s;\n' % (self.getType( func.btype ), self.getDeclFunction( func, func_prefix, '', this_arg )) )
             fo.write( '\n' )
             fo.write( '\t//-------------------------------------------------------------------------\n' )
-            fo.write( '\tpublic static %s\tNativeInstance;\n' % root_class )
-            fo.write( '\tpublic static %s\tInit()\n' % root_class )
+            fo.write( '\tstatic {\n' )
+            fo.write( '\t\tSystem.loadLibrary("%s");\n' % dll_name )
+            fo.write( '\t}\n' )
+            fo.write( '\tpublic static %s\tNativeAPI= new %s();\n' % (root_class, root_class) )
+            fo.write( '\tpublic static %s\tgetAPI()\n' % root_class )
             fo.write( '\t{\n' )
-            fo.write( '\t\tNativeInstance= new %s();\n' % root_class )
-            fo.write( '\t\treturn\tNativeInstance;\n' )
+            fo.write( '\t\treturn\tNativeAPI;\n' )
             fo.write( '\t}\n' )
             fo.write( '}\n\n' )
 
 
-    def generateApiClass( self, output_dir, class_list, package, root_class ):
+    def generateApiClass( self, output_dir, class_list, root_package, root_class ):
         for class_name in class_list:
             api= class_list[class_name]
             if api.is_root or api.func_list == []:
                 continue
-            output_file= os.path.join( self.getPackageFolder( output_dir, package ), api.name + '.java' )
+            output_file= os.path.join( self.getPackageFolder( output_dir, api.package ), api.name + '.java' )
             print( 'output=', output_file )
             with open( output_file, 'w', encoding= 'UTF-8' ) as fo:
                 fo.write( '// Auto generated file\n' )
                 fo.write( '// vim:ts=4 sw=4 et:\n' )
-                fo.write( 'package %s;\n' % package )
+                fo.write( 'package\t%s;\n' % api.package )
+                if root_package != api.package:
+                    fo.write( 'import\t%s.%s;\n' % (root_package, root_class) )
                 fo.write( '\n' )
                 fo.write( 'public class %s {\n' % api.name )
                 fo.write( '\tlong\tNativeThis;\n' )
                 fo.write( '\n' )
-                has_create_api= False
-                has_release_api= False
+                has_create,has_release= self.hasFactory( api )
                 for func in api.func_list:
                     func_static= ''
                     if func.is_static:
@@ -383,37 +397,30 @@ class JavaGenerator( CodeGenerator ):
                     func_result= ''
                     if func.btype != 'void':
                         func_result= 'return\t'
-                    fo.write( '\t\t%s%s.NativeInstance.%s;\n' % (func_result, root_class, self.getCallFunction( func, api.name, '', this_arg )) )
+                    fo.write( '\t\t%s%s.NativeAPI.%s;\n' % (func_result, root_class, self.getCallFunction( func, api.name, '', this_arg )) )
                     fo.write( '\t}\n' )
-                    if func.name == 'CreateAPI':
-                        has_create_api= True
-                    elif func.name == 'ReleaseAPI':
-                        has_release_api= True
                 fo.write( '\t//-------------------------------------------------------------------------\n' )
-                fo.write( '\tpublic void\tSetNativeAPI( long api )\n' )
+                fo.write( '\tpublic void\tsetNativeInstance( long api )\n' )
                 fo.write( '\t{\n' )
                 fo.write( '\t\tNativeThis= api;\n' )
                 fo.write( '\t}\n' )
-                fo.write( '\tpublic long\tGetNativeAPI()\n' )
+                fo.write( '\tpublic long\tgetNativeInstance()\n' )
                 fo.write( '\t{\n' )
                 fo.write( '\t\treturn\tNativeThis;\n' )
                 fo.write( '\t}\n' )
-                fo.write( '\tpublic %s()\n' % api.name )
-                fo.write( '\t{\n' )
-                fo.write( '\t}\n' )
                 fo.write( '\tpublic %s( long api )\n' % api.name )
                 fo.write( '\t{\n' )
-                fo.write( '\t\tNativeThis= api;\n' )
+                fo.write( '\t\tsetNativeInstance( api );\n' )
                 fo.write( '\t}\n' )
-                if has_create_api:
-                    fo.write( '\tpublic static %s\tCreate()\n' % api.name )
+                if has_create:
+                    fo.write( '\tpublic %s(%s)\n' % (api.name, self.getArgList( has_create.arg_list )) )
                     fo.write( '\t{\n' )
-                    fo.write( '\t\treturn\tnew %s( CreateAPI() );\n' % api.name )
+                    fo.write( '\t\tsetNativeInstance( %s );\n' % self.getCallFunction( has_create, '', '' ) )
                     fo.write( '\t}\n' )
-                if has_release_api:
-                    fo.write( '\tpublic void\tRelease()\n' )
+                if has_release:
+                    fo.write( '\tpublic void\trelease(%s)\n' % self.getArgList( has_release.arg_list ) )
                     fo.write( '\t{\n' )
-                    fo.write( '\t\tReleaseAPI();\n' )
+                    fo.write( '\t\t%s;\n' % self.getCallFunction( has_release ) )
                     fo.write( '\t\tNativeThis= 0;\n' )
                     fo.write( '\t}\n' )
                 fo.write( '}\n\n' )
@@ -516,65 +523,59 @@ class KotlinGenerator( CodeGenerator ):
             fo.write( '\t\tinit {\n' )
             fo.write( '\t\t\tSystem.loadLibrary("%s")\n' % dll_name )
             fo.write( '\t\t}\n' )
-            fo.write( '\t\tvar\tNativeInstance : %s = %s()\n' % (root_class, root_class) )
-            fo.write( '\t\tfun Init() : %s\n' % root_class )
-            fo.write( '\t\t{\n' )
-            fo.write( '\t\t\treturn\tNativeInstance\n' )
-            fo.write( '\t\t}\n' )
+            fo.write( '\t\tvar\tNativeAPI : %s = %s()\n' % (root_class, root_class) )
+            fo.write( '\t\tfun getAPI() : %s = NativeAPI\n' % root_class )
             fo.write( '\t}\n' )
             fo.write( '}\n\n' )
 
 
-    def generateApiClass( self, output_dir, class_list, package, root_class ):
+    def generateApiClass( self, output_dir, class_list, root_package, root_class ):
         for class_name in class_list:
             api= class_list[class_name]
             if api.is_root or api.func_list == []:
                 continue
-            output_file= os.path.join( self.getPackageFolder( output_dir, package ), api.name + '.kt' )
+            output_file= os.path.join( self.getPackageFolder( output_dir, api.package ), api.name + '.kt' )
             print( 'output=', output_file )
             with open( output_file, 'w', encoding= 'UTF-8' ) as fo:
                 fo.write( '// Auto generated file\n' )
                 fo.write( '// vim:ts=4 sw=4 et:\n' )
-                fo.write( 'package %s\n' % package )
+                fo.write( 'package\t%s\n' % api.package )
+                if root_package != api.package:
+                    fo.write( 'import\t%s.%s\n' % (root_package, root_class) )
                 fo.write( '\n' )
                 fo.write( 'class %s {\n' % api.name )
                 fo.write( '\tvar\tNativeThis : Long = 0\n' )
                 fo.write( '\n' )
-                has_create_api= False
-                has_release_api= False
+                has_create,has_release= self.hasFactory( api )
                 has_static= False
                 for func in api.func_list:
-                    if func.name == 'CreateAPI':
-                        has_create_api= True
+                    if func.name == 'CreateInstance':
                         continue
-                    elif func.name == 'ReleaseAPI':
-                        has_release_api= True
                     if func.is_static:
                         has_static= True
                         continue
                     fo.write( '\tfun\t%s(%s) : %s = ' % (func.name, self.getArgList( func.arg_list ), self.getType( func.btype )) )
                     this_arg= ' NativeThis'
-                    fo.write( '%s.NativeInstance.%s\n' % (root_class, self.getCallFunction( func, api.name, '', this_arg )) )
+                    fo.write( '%s.NativeAPI.%s\n' % (root_class, self.getCallFunction( func, api.name, '', this_arg )) )
                 fo.write( '\t//-------------------------------------------------------------------------\n' )
-                fo.write( '\tfun\tSetNativeAPI( api : Long )\n' )
+                fo.write( '\tfun\tsetNativeInstance( api : Long )\n' )
                 fo.write( '\t{\n' )
                 fo.write( '\t\tNativeThis= api\n' )
                 fo.write( '\t}\n' )
-                fo.write( '\tfun\tGetNativeAPI() : Long = NativeThis\n' )
+                fo.write( '\tfun\tgetNativeInstance() : Long = NativeThis\n' )
                 fo.write( '\tconstructor( api : Long )\n' )
                 fo.write( '\t{\n' )
-                fo.write( '\t\tNativeThis= api\n' )
+                fo.write( '\t\tsetNativeInstance( api )\n' )
                 fo.write( '\t}\n' )
-                if has_create_api:
-                    fo.write( '\tconstructor()\n' )
+                if has_create:
+                    fo.write( '\tconstructor(%s)\n' % self.getArgList( has_create.arg_list ) )
                     fo.write( '\t{\n' )
-                    #fo.write( '\t\tNativeThis=\t%s.NativeInstance.%sCreateAPI()\n' % (root_class, api.name) )
-                    fo.write( '\t\tSetNativeAPI( %s.NativeInstance.%sCreateAPI() )\n' % (root_class, api.name) )
+                    fo.write( '\t\tsetNativeInstance( %s.NativeAPI.%s )\n' % (root_class, self.getCallFunction( has_create, api.name )) )
                     fo.write( '\t}\n' )
-                if has_release_api:
-                    fo.write( '\tfun\tRelease()\n' )
+                if has_release:
+                    fo.write( '\tfun\trelease(%s)\n' % self.getArgList( has_release.arg_list ) )
                     fo.write( '\t{\n' )
-                    fo.write( '\t\tReleaseAPI()\n' )
+                    fo.write( '\t\t%s\n' % self.getCallFunction( has_release ) )
                     fo.write( '\t\tNativeThis= 0\n' )
                     fo.write( '\t}\n' )
                 if has_static:
@@ -585,7 +586,7 @@ class KotlinGenerator( CodeGenerator ):
                             continue
                         fo.write( '\tfun\t%s(%s) : %s = ' % (func.name, self.getArgList( func.arg_list ), self.getType( func.btype )) )
                         this_arg= None
-                        fo.write( '%s.NativeInstance.%s\n' % (root_class, self.getCallFunction( func, api.name, '', this_arg )) )
+                        fo.write( '%s.NativeAPI.%s\n' % (root_class, self.getCallFunction( func, api.name, '', this_arg )) )
                     fo.write( '\t//-------------------------------------------------------------------------\n' )
                     fo.write( '\t}\n' )
                 fo.write( '}\n\n' )
@@ -719,21 +720,25 @@ class ApiBinder:
     def __init__( self ):
         self.index= cindex.Index.create()
 
-    def generateCode( self, header_file, dll_name, java_root, cpp_root, include_list, class_path, use_kotlin ):
+    def generateCode( self, header_list, dll_name, java_root, cpp_root, include_list, class_path, use_kotlin ):
         decoder= HeaderDecoder()
 
-        tu= self.index.parse(
-                    header_file,
-                    ['-std=c++17', '-DFLAPIBINDER=1'],
-                    None,
-                    cindex.TranslationUnit.PARSE_SKIP_FUNCTION_BODIES
-                )
-
-        #decoder.dump_cursor( tu.cursor )
-
-        decoder.decodeHeader( tu.cursor )
         if class_path is not None:
             decoder.set_classpath( class_path )
+
+        for header_file in header_list:
+            if not os.path.exists( header_file ):
+                raise FileNotFoundError( 0, 'File not found', header_file )
+            tu= self.index.parse(
+                        header_file,
+                        ['-std=c++17', '-DFLAPIBINDER=1'],
+                        None,
+                        cindex.TranslationUnit.PARSE_SKIP_FUNCTION_BODIES
+                    )
+
+            #decoder.dump_cursor( tu.cursor )
+
+            decoder.decodeHeader( tu.cursor )
 
         if dll_name is None:
             dll_name= decoder.dll_name
@@ -749,31 +754,31 @@ class ApiBinder:
             java_generator= KotlinGenerator()
         else:
             java_generator= JavaGenerator()
-        java_generator.generateNativeClass( java_root, decoder.class_list, decoder.package, decoder.root_class, dll_name )
-        java_generator.generateApiClass( java_root, decoder.class_list, decoder.package, decoder.root_class )
+        java_generator.generateNativeClass( java_root, decoder.class_list, decoder.root_package, decoder.root_class, dll_name )
+        java_generator.generateApiClass( java_root, decoder.class_list, decoder.root_package, decoder.root_class )
 
         cpp_generator= CppGenerator()
-        cpp_generator.generateCode( cpp_root, decoder.class_list, decoder.package, decoder.root_class, include_list )
+        cpp_generator.generateCode( cpp_root, decoder.class_list, decoder.root_package, decoder.root_class, include_list )
 
 
 
 
 def usage():
-    print( 'API Binder 2019 Hiroyuki Ogasawara' )
-    print( 'usage: FlatAPIBinder.py [options] <header_file.h>' )
+    print( 'API Binder v1.00 2019 Hiroyuki Ogasawara' )
+    print( 'usage: FlatAPIBinder.py [options] <header_file.h> ...' )
     print( 'option' )
     print( '   --dll <dll_name>             default \'native-lib\'' )
     print( '   --java <java output root>    default \'.\'' )
     print( '   --cpp <cpp output path>      default \'.\'' )
     print( '   --kotlin' )
     print( '   --include <include file>' )
-    print( '   --classpath <class_path>     default \'com.example.NdkDefault\'' )
+    print( '   --classpath <jni_class_path> default \'com.example.NdkDefault\'' )
     print( '\nex. python3 FlatApiBinder.py --cpp app/src/main/cpp --java app/src/main/java --include NativeInterface.h --dll native-lib --classpath com.example.testapp.NdkRoot app/src/main/cpp/NativeInterface.h' )
     sys.exit( 0 )
 
 
 def main( argv ):
-    header_file= None
+    header_list= []
     dll_name= None
     java_root= None
     cpp_root= None
@@ -810,14 +815,14 @@ def main( argv ):
             else:
                 usage()
         else:
-            header_file= arg
+            header_list.append( arg )
         ai+= 1
 
-    if header_file is None:
+    if header_list == []:
         usage()
 
     binder= ApiBinder()
-    binder.generateCode( header_file, dll_name, java_root, cpp_root, include_list, class_path, use_kotlin )
+    binder.generateCode( header_list, dll_name, java_root, cpp_root, include_list, class_path, use_kotlin )
     return  0
 
 

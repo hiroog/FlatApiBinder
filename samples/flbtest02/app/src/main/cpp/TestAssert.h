@@ -1,3 +1,6 @@
+// FlatApiBinder sample
+// vim:ts=4 sw=4 noet:
+
 #pragma once
 #define	TEST_ASSERT(expr)	TestAssert((expr),#expr,__FILE__,__LINE__)
 
