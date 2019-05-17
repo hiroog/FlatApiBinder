@@ -18,7 +18,7 @@ python 3.x と libclang が必要です。
 ### Linux
 
 ```
-$ sudo apt install clang python3-pip
+$ sudo apt install clang libclang-dev python3-pip
 $ pip3 install clang
 $ export LD_LIBRARY_PATH=`llvm-config-X.X --libdir`
 ```

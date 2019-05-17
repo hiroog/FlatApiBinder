@@ -26,6 +26,20 @@ class NdkLib {
 	external fun	NativeClassGetDoubleParam( jj_this : Long ) : Double
 	external fun	NativeClassAccessJNIEnv( jj_this : Long, java_object : Any? ) : Unit
 
+	// CommonLib
+	external fun	CommonLibCreateInstance( arg0 : Int, arg1 : Int ) : Long
+	external fun	CommonLibReleaseInstance( jj_this : Long, arg : Int ) : Unit
+	external fun	CommonLibGetAddParam( jj_this : Long, param : Int ) : Int
+
+	// ItemClass
+	external fun	ItemClassSetItemID( jj_this : Long, item_id : Int ) : Unit
+	external fun	ItemClassGetItemID( jj_this : Long ) : Int
+
+	// ManagerClass
+	external fun	ManagerClassCreateInstance( talbe_size : Int ) : Long
+	external fun	ManagerClassReleaseInstance( jj_this : Long ) : Unit
+	external fun	ManagerClassGetItem( jj_this : Long, index : Int ) : Long
+
 	//-------------------------------------------------------------------------
 	companion object {
 		init {

@@ -98,11 +98,9 @@ class HeaderDecoder:
         if cursor.spelling == 'FLAPIBINDER_ClassPath':
             path= self.find_string( cursor )
             self.set_classpath( path )
-            print( 'Set PACKAGE   =', self.package )
         elif cursor.spelling == 'FLAPIBINDER_Package':
             path= self.find_string( cursor )
             self.package= path
-            print( 'Set PACKAGE   =', self.package )
         elif cursor.spelling == 'FLAPIBINDER_DllName':
             name= self.find_string( cursor )
             self.dll_name= name
@@ -134,7 +132,7 @@ class HeaderDecoder:
                 arg_name= arg.spelling
                 if arg_name == '':
                     arg_name= 'aRg%02d_' % index
-                print( 'TYPE',arg.type.spelling )
+                #print( 'TYPE',arg.type.spelling )
                 if index == 0 and arg.type.spelling == 'JNIEnv *':
                     jni_arg_list.append( BArg( arg_name, arg.type.spelling ) )
                 elif index == 1 and arg.type.spelling == 'jobject' and jni_arg_list != []:
@@ -206,10 +204,10 @@ class HeaderDecoder:
 
 
     def dump_api( self ):
-        print( 'Package:', self.package )
         for class_name in self.class_list:
             api= self.class_list[ class_name ]
-            print( 'Class', api.name )
+            print( 'Package:', api.package )
+            print( 'Class  :', api.name )
             for func in api.func_list:
                 print( '  Func:', func.name )
                 print( '    Type: [%s]' % func.btype )
@@ -729,12 +727,13 @@ class ApiBinder:
         for header_file in header_list:
             if not os.path.exists( header_file ):
                 raise FileNotFoundError( 0, 'File not found', header_file )
-            tu= self.index.parse(
-                        header_file,
-                        ['-std=c++17', '-DFLAPIBINDER=1'],
-                        None,
-                        cindex.TranslationUnit.PARSE_SKIP_FUNCTION_BODIES
-                    )
+            print( 'input=', header_file )
+            options= [ '-std=c++17', '-DFLAPIBINDER=1' ]
+            if use_kotlin:
+                options.append( '-DFLAPIBINDER_KOTLIN=1' )
+            else:
+                options.append( '-DFLAPIBINDER_JAVA=1' )
+            tu= self.index.parse( header_file, options, None, cindex.TranslationUnit.PARSE_SKIP_FUNCTION_BODIES )
 
             #decoder.dump_cursor( tu.cursor )
 

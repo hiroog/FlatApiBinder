@@ -26,6 +26,20 @@ public class NdkLib {
 	public native double	NativeClassGetDoubleParam( long jj_this );
 	public native void	NativeClassAccessJNIEnv( long jj_this, Object java_object );
 
+	// CommonLib
+	public native long	CommonLibCreateInstance( int arg0, int arg1 );
+	public native void	CommonLibReleaseInstance( long jj_this, int arg );
+	public native int	CommonLibGetAddParam( long jj_this, int param );
+
+	// ManagerClass
+	public native long	ManagerClassCreateInstance( int talbe_size );
+	public native void	ManagerClassReleaseInstance( long jj_this );
+	public native long	ManagerClassGetItem( long jj_this, int index );
+
+	// ItemClass
+	public native void	ItemClassSetItemID( long jj_this, int item_id );
+	public native int	ItemClassGetItemID( long jj_this );
+
 	//-------------------------------------------------------------------------
 	static {
 		System.loadLibrary("native-lib");

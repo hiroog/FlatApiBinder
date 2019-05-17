@@ -17,8 +17,7 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-             NativeLib.cpp
-             CommonLib2.cpp
+             native-lib.cpp
              NdkLib.cpp
              )
 
