@@ -14,7 +14,7 @@ class ItemClass {
 		NativeThis= api
 	}
 	fun	getNativeInstance() : Long = NativeThis
-	constructor( api : Long )
+	constructor( api : Long = 0 )
 	{
 		setNativeInstance( api )
 	}

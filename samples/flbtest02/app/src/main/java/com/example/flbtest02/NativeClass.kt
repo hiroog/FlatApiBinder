@@ -20,18 +20,22 @@ class NativeClass {
 		NativeThis= api
 	}
 	fun	getNativeInstance() : Long = NativeThis
-	constructor( api : Long )
+	constructor( api : Long = 0 )
 	{
 		setNativeInstance( api )
-	}
-	constructor()
-	{
-		setNativeInstance( NdkLib.NativeAPI.NativeClassCreateInstance() )
 	}
 	fun	release()
 	{
 		ReleaseInstance()
 		NativeThis= 0
+	}
+	companion object {
+	//-------------------------------------------------------------------------
+	fun	create() : NativeClass
+	{
+		return	NativeClass( NdkLib.NativeAPI.NativeClassCreateInstance() )
+	}
+	//-------------------------------------------------------------------------
 	}
 }
 

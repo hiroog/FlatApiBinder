@@ -3,7 +3,7 @@
 package	com.example.flbtest01;
 
 public class NativeClass {
-	long	NativeThis;
+	long	NativeThis= 0;
 
 	public static long	CreateInstance()
 	{
@@ -54,13 +54,16 @@ public class NativeClass {
 	{
 		return	NativeThis;
 	}
+	public NativeClass()
+	{
+	}
 	public NativeClass( long api )
 	{
 		setNativeInstance( api );
 	}
-	public NativeClass()
+	public static NativeClass	create()
 	{
-		setNativeInstance( CreateInstance() );
+		return	new NativeClass( CreateInstance() );
 	}
 	public void	release()
 	{

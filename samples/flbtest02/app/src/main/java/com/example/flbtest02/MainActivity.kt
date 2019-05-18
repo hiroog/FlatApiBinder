@@ -25,7 +25,7 @@ class MainActivity : AppCompatActivity() {
 	{
 		var api= NdkLib.getAPI()
 
-		var	nc= NativeClass()
+		var	nc= NativeClass.create()
 		nc.SetParams( 100100, 2020, 101, 303030303030303030L, 4400.44f, 555000.555 )
 		api.Assert( nc.GetIntParam() == 100100, "IntParam failed" )
 		api.Assert( nc.GetShortParam().compareTo( 2020 ) == 0, "ShortParam failed" )
@@ -41,8 +41,8 @@ class MainActivity : AppCompatActivity() {
 	{
 		var	api= NdkLib.getAPI();
 
-		var	lib1= CommonLib( 111, 222 )
-		var	lib2= CommonLib( 100, 200 )
+		var	lib1= CommonLib.create( 111, 222 )
+		var	lib2= CommonLib.create( 100, 200 )
 		api.Assert( lib1.GetAddParam( 333 ) == 111+222+333, "CommonLib failed" )
 		api.Assert( lib2.GetAddParam( 300 ) == 100+200+300, "CommonLib failed" )
 		lib1.release( 0 )
@@ -54,8 +54,8 @@ class MainActivity : AppCompatActivity() {
 		var	api= NdkLib.getAPI()
 
 		val	ITEM_COUNT= 100
-		var	manager= ManagerClass( ITEM_COUNT )
-		var	item= ItemClass( 0 )
+		var	manager= ManagerClass.create( ITEM_COUNT )
+		var	item= ItemClass()
 		for( i in 0..ITEM_COUNT-1 ){
 			item.setNativeInstance( manager.GetItem( i ) )
 			item.SetItemID( 1000 + i )

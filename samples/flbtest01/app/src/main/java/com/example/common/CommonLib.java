@@ -4,7 +4,7 @@ package	com.example.common;
 import	com.example.flbtest01.NdkLib;
 
 public class CommonLib {
-	long	NativeThis;
+	long	NativeThis= 0;
 
 	public static long	CreateInstance( int arg0, int arg1 )
 	{
@@ -27,13 +27,16 @@ public class CommonLib {
 	{
 		return	NativeThis;
 	}
+	public CommonLib()
+	{
+	}
 	public CommonLib( long api )
 	{
 		setNativeInstance( api );
 	}
-	public CommonLib( int arg0, int arg1 )
+	public static CommonLib	create( int arg0, int arg1 )
 	{
-		setNativeInstance( CreateInstance( arg0, arg1 ) );
+		return	new CommonLib( CreateInstance( arg0, arg1 ) );
 	}
 	public void	release( int arg )
 	{

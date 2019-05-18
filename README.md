@@ -220,14 +220,14 @@ $ python3 FlatApiBinder.py --cpp app/src/main/cpp --java app/src/main/java --dll
 
 ```java
 // Java
-NativeClass  api= new NativeClass();
+NativeClass  api= NativeClass.create();
 api.setStoragePath( "internal storage path" );
 api.release();
 ```
 
 ```kotlin
 // kotlin
-var  api= NativeClass()
+var  api= NativeClass.create()
 api.setStoragePath( "internal storage path" )
 api.release()
 ```
@@ -387,19 +387,29 @@ NativeClass*  NativeClass::CreateInstance()
 }
 ```
 
-呼び出し例 (java)。 明示的な release() が必要。
+呼び出し例。create() を使った場合は明示的な release() が必要。
 
 ```java
 // java
-NativeClass  napi= new NativeClass();  // call CreateInstance()
+NativeClass  napi= NativeClass.create();  // call CreateInstance()
 
 ...
 
 napi.release();  // call ReleaseInstance()
 ```
 
+```kotlin
+// kotlin
+var  napi= NativeClass.create()  // call CreateInstance()
+
+...
+
+napi.release()  // call ReleaseInstance()
+```
+
 CreateInstance() や ReleaseInstance() がなくても構いません。
 動的に生成しない class の場合は、C++ から instance を受け取って自分で設定してください。
+samples/flbtest01 や flbtest02 の CommonLib2.h を参考にしてください。
 
 
 ```cpp
@@ -425,7 +435,13 @@ public:
 // java
 NdkLib api= NdkLib.getAPI();
 NativeClass napi= new NativeClass( api.getNativeClassReference() );
+...
+```
 
+```kotlin
+// kotlin
+var api= NdkLib.getAPI()
+var napi= NativeClass( api.getNativeClassReference() )
 ...
 ```
 

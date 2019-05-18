@@ -25,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
 	{
 		NdkLib	api= NdkLib.getAPI();
 
-		NativeClass	nc= new NativeClass();
+		NativeClass	nc= NativeClass.create();
 		nc.SetParams( 100100, (short)2020, (byte)101, 303030303030303030L, 4400.44f, 555000.555 );
 		api.Assert( nc.GetIntParam() == 100100, "IntParam failed" );
 		api.Assert( nc.GetShortParam() == 2020, "ShortParam failed" );
@@ -41,8 +41,8 @@ public class MainActivity extends AppCompatActivity {
 	{
 		NdkLib	api= NdkLib.getAPI();
 
-		CommonLib	lib1= new CommonLib( 111, 222 );
-		CommonLib	lib2= new CommonLib( 100, 200 );
+		CommonLib	lib1= CommonLib.create( 111, 222 );
+		CommonLib	lib2= CommonLib.create( 100, 200 );
 		api.Assert( lib1.GetAddParam( 333 ) == 111+222+333, "CommonLib failed" );
 		api.Assert( lib2.GetAddParam( 300 ) == 100+200+300, "CommonLib failed" );
 		lib1.release( 0 );
@@ -54,8 +54,8 @@ public class MainActivity extends AppCompatActivity {
 		NdkLib	api= NdkLib.getAPI();
 
 		final int		ITEM_COUNT= 100;
-		ManagerClass	manager= new ManagerClass( ITEM_COUNT );
-		ItemClass	item= new ItemClass( 0 );
+		ManagerClass	manager= ManagerClass.create( ITEM_COUNT );
+		ItemClass	item= new ItemClass();
 		for( int i= 0 ; i< ITEM_COUNT ; i++ ){
 			item.setNativeInstance( manager.GetItem( i ) );
 			item.SetItemID( 1000 + i );

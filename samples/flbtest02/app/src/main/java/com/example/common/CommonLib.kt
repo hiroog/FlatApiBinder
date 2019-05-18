@@ -14,18 +14,22 @@ class CommonLib {
 		NativeThis= api
 	}
 	fun	getNativeInstance() : Long = NativeThis
-	constructor( api : Long )
+	constructor( api : Long = 0 )
 	{
 		setNativeInstance( api )
-	}
-	constructor( arg0 : Int, arg1 : Int )
-	{
-		setNativeInstance( NdkLib.NativeAPI.CommonLibCreateInstance( arg0, arg1 ) )
 	}
 	fun	release( arg : Int )
 	{
 		ReleaseInstance( arg )
 		NativeThis= 0
+	}
+	companion object {
+	//-------------------------------------------------------------------------
+	fun	create( arg0 : Int, arg1 : Int ) : CommonLib
+	{
+		return	CommonLib( NdkLib.NativeAPI.CommonLibCreateInstance( arg0, arg1 ) )
+	}
+	//-------------------------------------------------------------------------
 	}
 }
 

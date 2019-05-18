@@ -4,7 +4,7 @@ package	com.example.common;
 import	com.example.flbtest01.NdkLib;
 
 public class ItemClass {
-	long	NativeThis;
+	long	NativeThis= 0;
 
 	public void	SetItemID( int item_id )
 	{
@@ -22,6 +22,9 @@ public class ItemClass {
 	public long	getNativeInstance()
 	{
 		return	NativeThis;
+	}
+	public ItemClass()
+	{
 	}
 	public ItemClass( long api )
 	{

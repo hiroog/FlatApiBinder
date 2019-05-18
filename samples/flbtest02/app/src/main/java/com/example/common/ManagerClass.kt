@@ -14,18 +14,22 @@ class ManagerClass {
 		NativeThis= api
 	}
 	fun	getNativeInstance() : Long = NativeThis
-	constructor( api : Long )
+	constructor( api : Long = 0 )
 	{
 		setNativeInstance( api )
-	}
-	constructor( talbe_size : Int )
-	{
-		setNativeInstance( NdkLib.NativeAPI.ManagerClassCreateInstance( talbe_size ) )
 	}
 	fun	release()
 	{
 		ReleaseInstance()
 		NativeThis= 0
+	}
+	companion object {
+	//-------------------------------------------------------------------------
+	fun	create( talbe_size : Int ) : ManagerClass
+	{
+		return	ManagerClass( NdkLib.NativeAPI.ManagerClassCreateInstance( talbe_size ) )
+	}
+	//-------------------------------------------------------------------------
 	}
 }
 

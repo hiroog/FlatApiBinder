@@ -179,6 +179,23 @@ JNIEXPORT jint JNICALL	Java_com_example_flbtest01_NdkLib_CommonLibGetAddParam( J
 }
 
 
+// ItemClass
+JNIEXPORT void JNICALL	Java_com_example_flbtest01_NdkLib_ItemClassSetItemID( JNIEnv* env, jobject tobj, jlong jj_This_, jint jj_item_id )
+{
+	auto	cc_item_id= static_cast<int>( jj_item_id );
+	auto*	cc_This_= reinterpret_cast<ItemClass*>(static_cast<intptr_t>(jj_This_));
+	cc_This_->SetItemID( cc_item_id );
+}
+
+JNIEXPORT jint JNICALL	Java_com_example_flbtest01_NdkLib_ItemClassGetItemID( JNIEnv* env, jobject tobj, jlong jj_This_ )
+{
+	auto*	cc_This_= reinterpret_cast<ItemClass*>(static_cast<intptr_t>(jj_This_));
+	auto	cc_result_= cc_This_->GetItemID();
+	auto	jj_result_= static_cast<jint>( cc_result_ );
+	return	jj_result_;
+}
+
+
 // ManagerClass
 JNIEXPORT jlong JNICALL	Java_com_example_flbtest01_NdkLib_ManagerClassCreateInstance( JNIEnv* env, jobject tobj, jint jj_talbe_size )
 {
@@ -200,23 +217,6 @@ JNIEXPORT jlong JNICALL	Java_com_example_flbtest01_NdkLib_ManagerClassGetItem( J
 	auto*	cc_This_= reinterpret_cast<ManagerClass*>(static_cast<intptr_t>(jj_This_));
 	auto	cc_result_= cc_This_->GetItem( cc_index );
 	auto	jj_result_= static_cast<jlong>( reinterpret_cast<intptr_t>(cc_result_) );
-	return	jj_result_;
-}
-
-
-// ItemClass
-JNIEXPORT void JNICALL	Java_com_example_flbtest01_NdkLib_ItemClassSetItemID( JNIEnv* env, jobject tobj, jlong jj_This_, jint jj_item_id )
-{
-	auto	cc_item_id= static_cast<int>( jj_item_id );
-	auto*	cc_This_= reinterpret_cast<ItemClass*>(static_cast<intptr_t>(jj_This_));
-	cc_This_->SetItemID( cc_item_id );
-}
-
-JNIEXPORT jint JNICALL	Java_com_example_flbtest01_NdkLib_ItemClassGetItemID( JNIEnv* env, jobject tobj, jlong jj_This_ )
-{
-	auto*	cc_This_= reinterpret_cast<ItemClass*>(static_cast<intptr_t>(jj_This_));
-	auto	cc_result_= cc_This_->GetItemID();
-	auto	jj_result_= static_cast<jint>( cc_result_ );
 	return	jj_result_;
 }
 

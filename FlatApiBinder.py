@@ -380,7 +380,7 @@ class JavaGenerator( CodeGenerator ):
                     fo.write( 'import\t%s.%s;\n' % (root_package, root_class) )
                 fo.write( '\n' )
                 fo.write( 'public class %s {\n' % api.name )
-                fo.write( '\tlong\tNativeThis;\n' )
+                fo.write( '\tlong\tNativeThis= 0;\n' )
                 fo.write( '\n' )
                 has_create,has_release= self.hasFactory( api )
                 for func in api.func_list:
@@ -406,14 +406,17 @@ class JavaGenerator( CodeGenerator ):
                 fo.write( '\t{\n' )
                 fo.write( '\t\treturn\tNativeThis;\n' )
                 fo.write( '\t}\n' )
+                fo.write( '\tpublic %s()\n' % api.name )
+                fo.write( '\t{\n' )
+                fo.write( '\t}\n' )
                 fo.write( '\tpublic %s( long api )\n' % api.name )
                 fo.write( '\t{\n' )
                 fo.write( '\t\tsetNativeInstance( api );\n' )
                 fo.write( '\t}\n' )
                 if has_create:
-                    fo.write( '\tpublic %s(%s)\n' % (api.name, self.getArgList( has_create.arg_list )) )
+                    fo.write( '\tpublic static %s\tcreate(%s)\n' % (api.name, self.getArgList( has_create.arg_list )) )
                     fo.write( '\t{\n' )
-                    fo.write( '\t\tsetNativeInstance( %s );\n' % self.getCallFunction( has_create, '', '' ) )
+                    fo.write( '\t\treturn\tnew %s( %s );\n' % (api.name, self.getCallFunction( has_create, '', '' )) )
                     fo.write( '\t}\n' )
                 if has_release:
                     fo.write( '\tpublic void\trelease(%s)\n' % self.getArgList( has_release.arg_list ) )
@@ -547,8 +550,8 @@ class KotlinGenerator( CodeGenerator ):
                 has_create,has_release= self.hasFactory( api )
                 has_static= False
                 for func in api.func_list:
-                    if func.name == 'CreateInstance':
-                        continue
+                    #if func.name == 'CreateInstance':
+                    #    continue
                     if func.is_static:
                         has_static= True
                         continue
@@ -561,15 +564,16 @@ class KotlinGenerator( CodeGenerator ):
                 fo.write( '\t\tNativeThis= api\n' )
                 fo.write( '\t}\n' )
                 fo.write( '\tfun\tgetNativeInstance() : Long = NativeThis\n' )
-                fo.write( '\tconstructor( api : Long )\n' )
+                fo.write( '\tconstructor( api : Long = 0 )\n' )
                 fo.write( '\t{\n' )
                 fo.write( '\t\tsetNativeInstance( api )\n' )
                 fo.write( '\t}\n' )
                 if has_create:
-                    fo.write( '\tconstructor(%s)\n' % self.getArgList( has_create.arg_list ) )
-                    fo.write( '\t{\n' )
-                    fo.write( '\t\tsetNativeInstance( %s.NativeAPI.%s )\n' % (root_class, self.getCallFunction( has_create, api.name )) )
-                    fo.write( '\t}\n' )
+                    #fo.write( '\tconstructor(%s)\n' % self.getArgList( has_create.arg_list ) )
+                    #fo.write( '\t{\n' )
+                    #fo.write( '\t\tsetNativeInstance( %s.NativeAPI.%s )\n' % (root_class, self.getCallFunction( has_create, api.name )) )
+                    #fo.write( '\t}\n' )
+                    pass
                 if has_release:
                     fo.write( '\tfun\trelease(%s)\n' % self.getArgList( has_release.arg_list ) )
                     fo.write( '\t{\n' )
@@ -582,9 +586,16 @@ class KotlinGenerator( CodeGenerator ):
                     for func in api.func_list:
                         if not func.is_static:
                             continue
+                        if func.name == 'CreateInstance':
+                            continue
                         fo.write( '\tfun\t%s(%s) : %s = ' % (func.name, self.getArgList( func.arg_list ), self.getType( func.btype )) )
                         this_arg= None
                         fo.write( '%s.NativeAPI.%s\n' % (root_class, self.getCallFunction( func, api.name, '', this_arg )) )
+                    if has_create:
+                        fo.write( '\tfun\tcreate(%s) : %s\n' % (self.getArgList( has_create.arg_list ), api.name) )
+                        fo.write( '\t{\n' )
+                        fo.write( '\t\treturn\t%s( %s.NativeAPI.%s )\n' % (api.name, root_class, self.getCallFunction( has_create, api.name )) )
+                        fo.write( '\t}\n' )
                     fo.write( '\t//-------------------------------------------------------------------------\n' )
                     fo.write( '\t}\n' )
                 fo.write( '}\n\n' )

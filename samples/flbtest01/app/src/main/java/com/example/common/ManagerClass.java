@@ -4,7 +4,7 @@ package	com.example.common;
 import	com.example.flbtest01.NdkLib;
 
 public class ManagerClass {
-	long	NativeThis;
+	long	NativeThis= 0;
 
 	public static long	CreateInstance( int talbe_size )
 	{
@@ -27,13 +27,16 @@ public class ManagerClass {
 	{
 		return	NativeThis;
 	}
+	public ManagerClass()
+	{
+	}
 	public ManagerClass( long api )
 	{
 		setNativeInstance( api );
 	}
-	public ManagerClass( int talbe_size )
+	public static ManagerClass	create( int talbe_size )
 	{
-		setNativeInstance( CreateInstance( talbe_size ) );
+		return	new ManagerClass( CreateInstance( talbe_size ) );
 	}
 	public void	release()
 	{
