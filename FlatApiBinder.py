@@ -729,7 +729,7 @@ class ApiBinder:
     def __init__( self ):
         self.index= cindex.Index.create()
 
-    def generateCode( self, header_list, dll_name, java_root, cpp_root, include_list, class_path, use_kotlin ):
+    def generateCode( self, header_list, dll_name, java_root, cpp_root, include_list, class_path, use_kotlin, option_list ):
         decoder= HeaderDecoder()
 
         if class_path is not None:
@@ -744,6 +744,7 @@ class ApiBinder:
                 options.append( '-DFLAPIBINDER_KOTLIN=1' )
             else:
                 options.append( '-DFLAPIBINDER_JAVA=1' )
+            options.extend( option_list )
             tu= self.index.parse( header_file, options, None, cindex.TranslationUnit.PARSE_SKIP_FUNCTION_BODIES )
 
             #decoder.dump_cursor( tu.cursor )
@@ -774,7 +775,7 @@ class ApiBinder:
 
 
 def usage():
-    print( 'API Binder v1.00 2019 Hiroyuki Ogasawara' )
+    print( 'API Binder v1.01 2019 Hiroyuki Ogasawara' )
     print( 'usage: FlatAPIBinder.py [options] <header_file.h> ...' )
     print( 'option' )
     print( '   --dll <dll_name>             default \'native-lib\'' )
@@ -783,6 +784,8 @@ def usage():
     print( '   --kotlin' )
     print( '   --include <include file>' )
     print( '   --classpath <jni_class_path> default \'com.example.NdkDefault\'' )
+    print( '   -D<SYMBOL>=<VALUE>' )
+    print( '   -I<IncludeDir>' )
     print( '\nex. python3 FlatApiBinder.py --cpp app/src/main/cpp --java app/src/main/java --include NativeInterface.h --dll native-lib --classpath com.example.testapp.NdkRoot app/src/main/cpp/NativeInterface.h' )
     sys.exit( 0 )
 
@@ -795,6 +798,7 @@ def main( argv ):
     class_path= None
     include_list= []
     use_kotlin= False
+    option_list= []
     acount= len(argv)
     ai= 1
     while ai < acount:
@@ -822,6 +826,10 @@ def main( argv ):
                     class_path= argv[ai]
             elif arg == '--kotlin':
                 use_kotlin= True
+            elif arg.startswith( '-D' ):
+                option_list.append( arg )
+            elif arg.startswith( '-I' ):
+                option_list.append( arg )
             else:
                 usage()
         else:
@@ -832,7 +840,7 @@ def main( argv ):
         usage()
 
     binder= ApiBinder()
-    binder.generateCode( header_list, dll_name, java_root, cpp_root, include_list, class_path, use_kotlin )
+    binder.generateCode( header_list, dll_name, java_root, cpp_root, include_list, class_path, use_kotlin, option_list )
     return  0
 
 
